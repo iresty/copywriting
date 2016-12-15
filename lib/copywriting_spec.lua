@@ -66,4 +66,9 @@ describe('format line', function()
         assert.are.same('支持内联代码片段`^_^颜文字233`',
             copywriting.format('支持内联代码片段`^_^颜文字233`'))
     end)
+
+    it('trim trailing whitespace', function()
+        assert.are.same('HTTP 方法包括以下几种：',
+            copywriting.format('HTTP方法包括以下几种：  '))
+    end)
 end)

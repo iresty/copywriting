@@ -77,6 +77,10 @@ local function add_space(text)
     return text
 end
 
+local function trim_right(line)
+    return line:gsub('%s+$', '', 1)
+end
+
 function _M.format(line)
     -- 避免格式化成有序列表
     if line:find('^%d%.') then
@@ -101,7 +105,7 @@ function _M.format(line)
     else
         t[#t + 1] = ''
     end
-    return table.concat(t, '`')
+    return trim_right(table.concat(t, '`'))
 end
 
 function _M.run(filename)
