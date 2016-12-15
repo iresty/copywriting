@@ -47,8 +47,10 @@ describe('format line', function()
         assert.are.same('特定 body 的准入控制', copywriting.format('特定 body 的准入控制'))
     end)
 
-    it('do not add space before punctuation in fullwidth', function()
+    it('do not add space before Chinese punctuation', function()
         assert.are.same('OpenResty，是一个 Web 平台', copywriting.format('OpenResty，是一个Web平台'))
+        assert.are.same('提供的 GET、POST、PUT 和 DELETE 方法',
+            copywriting.format('提供的GET、POST、PUT和DELETE方法'))
     end)
 
     it('ignore special line-start mark', function()
@@ -61,6 +63,7 @@ describe('format line', function()
     end)
 
     it('ignore inline code', function()
-        assert.are.same('支持内联代码片段`^_^颜文字233`', copywriting.format('支持内联代码片段`^_^颜文字233`'))
+        assert.are.same('支持内联代码片段`^_^颜文字233`',
+            copywriting.format('支持内联代码片段`^_^颜文字233`'))
     end)
 end)

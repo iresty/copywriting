@@ -1,5 +1,18 @@
 local _M = {}
 
+-- CJK Symbols: E3 80 80 - E3 80 BF
+-- Halfwidth and Fullwidth: EF BC 80 - EF BF AF
+local function is_chinese_punctuation(word)
+    if word:byte(1) == 0xE3 and word:byte(2) == 0x80 then
+        local byte = word:byte(3)
+        return  0x80 <= byte and byte <= 0xBF
+    elseif word:byte(1) == 0xEF then
+        local byte = word:byte(2) * 0x100 + word:byte(3)
+        return 0xBC80 <= byte and byte <= 0xBFAF
+    end
+    return false
+end
+
 local function add_space(text)
     local in_asterisk = false
     local in_wave = false
@@ -49,11 +62,19 @@ local function add_space(text)
     end)
 
     local word_pattern = '%w+%s?%w+'
-    -- TODO lua正则不支持unicode range，如果想用码表，需要用string.byte获取大小并判断
-    local chinese_punctuation = '。，！？；……（）“”'
-    text = text:gsub('^('..word_pattern..')([^%s%w%p'..chinese_punctuation..'])', '%1 %2')
+    text = text:gsub('^('..word_pattern..')([^%s%w%p])', '%1 %2')
     text = text:gsub('([^%s%w%p])('..word_pattern..')$', '%1 %2')
-    return text:gsub('([^%s%w%p])('..word_pattern..')([^%s%w%p])', '%1 %2 %3')
+    text = text:gsub('([^%s%w%p])('..word_pattern..')([^%s%w%p])', '%1 %2 %3')
+
+    -- 移除中文标点前的空白
+    text = text:gsub(' (...)', function(match)
+        return is_chinese_punctuation(match) and match or (' '..match)
+    end)
+     -- 移除中文标点后的多个空白
+    text = text:gsub('(...)(%s+)', function(match, ws)
+        return is_chinese_punctuation(match) and match or (match..ws)
+    end)
+    return text
 end
 
 function _M.format(line)
