@@ -1,3 +1,4 @@
+local dict = require "copywriting.dict"
 local _M = {}
 
 -- CJK Symbols: E3 80 80 - E3 80 BF
@@ -14,57 +15,36 @@ local function is_chinese_punctuation(word)
 end
 
 local function add_space(text)
-    local in_asterisk = false
-    local in_wave = false
     -- 不支持用 _xx_ 表示斜体。容易跟代码混淆。
-    text = text:gsub('([^%p])(*+)(.?)', function(before, punctuation, after)
-        in_asterisk = not in_asterisk
-        if in_asterisk then
-            before = before:find('%s') and before or (before .. ' ')
-            return before .. punctuation .. after
-        end
-        if #after > 0 and not after:find('%s') then
-            after = ' ' .. after
-        end
-        return before .. punctuation .. after
+    text = text:gsub('([^%p])(*+.+*+)(.?)', function(before, word, after)
+        before = before:find('^%s') and before or (before..' ')
+        after = after:find('^%s') and after or (' '..after)
+        return before .. word .. after
     end)
-    text = text:gsub('([^%p])(~~)(.?)', function(before, punctuation, after)
-        in_wave = not in_wave
-        if in_wave then
-            before = before:find('%s') and before or (before .. ' ')
-            return before .. punctuation .. after
-        end
-        if #after > 0 and not after:find('%s') then
-            after = ' ' .. after
-        end
-        return before .. punctuation .. after
+    text = text:gsub('([^%p])(~~.+~~)(.?)', function(before, word, after)
+        before = before:find('^%s') and before or (before..' ')
+        after = after:find('^%s') and after or (' '..after)
+        return before .. word .. after
     end)
-    text = text:gsub('([^%p])([.,?!;%%+/]+)(%S)', function(before, punctuation, after)
+
+    -- 断句标点
+    text = text:gsub('([^%p])([.,?!;%%]+)(%S)', function(before, punctuation, after)
         if punctuation:sub(-1) == '.' and after:find('[%d%l]') then
             return before .. punctuation .. after
         end
-
-        if punctuation:sub(1, 1) == '*' then
-            in_asterisk = not in_asterisk
-            if in_asterisk then
-                before = before:find('%s') and before or (before .. ' ')
-                return before .. punctuation .. after
-            end
-        end
-        if punctuation:sub(1, 2) == '~~' then
-            in_wave = not in_wave
-            if in_wave then
-                before = before:find('%s') and before or (before .. ' ')
-                return before .. punctuation .. after
-            end
-        end
         return before .. punctuation .. ' ' .. after
     end)
+    -- 对称操作符
+    text = text:gsub('([^%p])(%+)(%S)', '%1 %2 %3')
 
-    local word_pattern = '%w+%s?%w+'
+    local word_pattern = '%w+[%s%p]?%w+'
     text = text:gsub('^('..word_pattern..')([^%s%w%p])', '%1 %2')
     text = text:gsub('([^%s%w%p])('..word_pattern..')$', '%1 %2')
-    text = text:gsub('([^%s%w%p])('..word_pattern..')([^%s%w%p])', '%1 %2 %3')
+    text = text:gsub('([^%w%p])('..word_pattern..')([^%w%p])', function(before, match, after)
+        before = before:find('^%s') and before or (before..' ')
+        after = after:find('^%s') and after or (' '..after)
+        return before .. match .. after
+    end)
 
     -- 移除中文标点前的空白
     text = text:gsub(' (...)', function(match)
@@ -75,6 +55,16 @@ local function add_space(text)
         return is_chinese_punctuation(match) and match or (match..ws)
     end)
     return text
+end
+
+local function replace_word(text)
+    return text:gsub('%w+', function(match)
+        return dict[match:lower()] or match
+    end)
+end
+
+local function format(text)
+    return replace_word(add_space(text))
 end
 
 local function trim_right(line)
@@ -93,7 +83,7 @@ function _M.format(line)
     local from, to, cap = line:find(pattern, 1)
     local in_inline_code = false
     while from do
-        cap = in_inline_code and cap or add_space(cap)
+        cap = in_inline_code and cap or format(cap)
         t[#t + 1] = cap
         in_inline_code = not in_inline_code
         last_part = to + 1
@@ -101,7 +91,7 @@ function _M.format(line)
     end
     if last_part <= #line then
         cap = line:sub(last_part)
-        t[#t + 1] = add_space(cap)
+        t[#t + 1] = format(cap)
     else
         t[#t + 1] = ''
     end
@@ -119,17 +109,17 @@ function _M.run(filename)
             in_code_block = not in_code_block
         end
 
-        if in_code_block or #line == 0 or line:sub(1, 4) == '    ' or line:sub(1, 1) == '\t' then
+        if in_code_block or #line == 0 or line:find('^[%s>]') then
             action = 'ignore'
-        elseif line:find('^%s*[*+%d#=->!\\[]') then
+        elseif line:find('^%s*[*+%d#=%-!\\[]') then
+            action = 'format'
+        else
             -- 支持跨行的内联代码
             action = 'append'
-        else
-            action = 'format'
         end
 
         if action ~= 'append' then
-            if #sentences_block > 0 then
+            if next(sentences_block) then
                 output[#output + 1] = _M.format(table.concat(sentences_block, '\n'))
                 sentences_block = {}
             end
@@ -142,7 +132,7 @@ function _M.run(filename)
             sentences_block[#sentences_block + 1] = line
         end
     end
-    if #sentences_block > 0 then
+    if next(sentences_block) then
         output[#output + 1] = _M.format(table.concat(sentences_block, '\n'))
     end
 

@@ -71,4 +71,14 @@ describe('format line', function()
         assert.are.same('HTTP 方法包括以下几种：',
             copywriting.format('HTTP方法包括以下几种：  '))
     end)
+
+    it('keyword replacing', function()
+        assert.are.same('Nginx 是一个高性能 Web 服务器，而 OpenResty 不仅仅是 Nginx + Lua',
+            copywriting.format('nginx是一个高性能web服务器，而Openresty不仅仅是nginx+lua'))
+    end)
+
+    it('handle partial markdown notation', function()
+        assert.are.same('这是*星号', copywriting.format('这是*星号'))
+        assert.are.same('哈哈~~哈哈', copywriting.format('哈哈~~哈哈'))
+    end)
 end)
