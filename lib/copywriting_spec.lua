@@ -1,5 +1,9 @@
 local copywriting = require "copywriting"
 local run = copywriting.run
+local format = copywriting.format
+local function eq(expected, actual)
+    assert.are.same(expected, actual)
+end
 
 -- http://lua-users.org/wiki/SplitJoin
 local function split(text, separator)
@@ -38,121 +42,121 @@ code block不做处理
 ]], '\n')
         local actual = split(run('fixture.md'), '\n')
         for i, line in ipairs(actual) do
-            assert.are.same(expected[i], line)
+            eq(expected[i], line)
         end
     end)
 end)
 
 describe('format line', function()
     it('add space between Chinese and English', function()
-        assert.are.same('OpenResty 中特定 body 的准入控制',
-            copywriting.format('OpenResty中特定body的准入控制'))
-        assert.are.same('当你的 API Server 接口服务比较多',
-            copywriting.format('当你的API Server接口服务比较多'))
-        assert.are.same('在 C 语言中', copywriting.format('在C语言中'))
+        eq('OpenResty 中特定 body 的准入控制',
+            format('OpenResty中特定body的准入控制'))
+        eq('当你的 API Server 接口服务比较多',
+            format('当你的API Server接口服务比较多'))
+        eq('在 C 语言中', format('在C语言中'))
     end)
 
     it('add space between Chinese and number', function()
-        assert.are.same('2014 年，', copywriting.format('2014年，'))
-        assert.are.same('奇虎 360 公司的第 1024', copywriting.format('奇虎360公司的第1024'))
-        assert.are.same('2014 年 9 月 12 日', copywriting.format('2014年9月12日'))
+        eq('2014 年，', format('2014年，'))
+        eq('奇虎 360 公司的第 1024', format('奇虎360公司的第1024'))
+        eq('2014 年 9 月 12 日', format('2014年9月12日'))
     end)
 
     it('add space after some punctuations if there is no space', function()
-        assert.are.same('Moreover, OpenResty support', copywriting.format('Moreover,OpenResty support'))
-        assert.are.same('Moreover, OpenResty support', copywriting.format('Moreover, OpenResty support'))
-        assert.are.same('50% 的酒精', copywriting.format('50%的酒精'))
-        assert.are.same('从 40-60 中', copywriting.format('从 40-60 中'))
+        eq('Moreover, OpenResty support', format('Moreover,OpenResty support'))
+        eq('Moreover, OpenResty support', format('Moreover, OpenResty support'))
+        eq('50% 的酒精', format('50%的酒精'))
+        eq('从 40-60 中', format('从 40-60 中'))
         -- 点号后面如果是标点符号、小写字母、数字，不加空格
-        assert.are.same([[ffi.\*API]], copywriting.format([[ffi.\*API]]))
-        assert.are.same('1.2', copywriting.format('1.2'))
-        assert.are.same('fixture.md', copywriting.format('fixture.md'))
+        eq([[ffi.\*API]], format([[ffi.\*API]]))
+        eq('1.2', format('1.2'))
+        eq('fixture.md', format('fixture.md'))
     end)
 
     it('add space around asterisks if there is no space', function()
-        assert.are.same('注意 **不要** 修改', copywriting.format('注意 **不要**修改'))
-        assert.are.same('注意 *不要* 修改', copywriting.format('注意*不要* 修改'))
-        assert.are.same('注意 **不要**', copywriting.format('注意**不要**'))
-        assert.are.same('*不要* 修改', copywriting.format('*不要*修改'))
-        assert.are.same('**不要** 修改 *这里*', copywriting.format('**不要**修改*这里*'))
+        eq('注意 **不要** 修改', format('注意 **不要**修改'))
+        eq('注意 *不要* 修改', format('注意*不要* 修改'))
+        eq('注意 **不要**', format('注意**不要**'))
+        eq('*不要* 修改', format('*不要*修改'))
+        eq('**不要** 修改 *这里*', format('**不要**修改*这里*'))
     end)
 
     it('add space around waves if there is no space', function()
-        assert.are.same('~~不要~~ 修改', copywriting.format('~~不要~~修改'))
-        assert.are.same('注意 ~~不要~~ 修改', copywriting.format('注意~~不要~~修改'))
-        assert.are.same('注意 ~~不要~~', copywriting.format('注意~~不要~~'))
-        assert.are.same('~~不要~~ 修改', copywriting.format('~~不要~~ 修改'))
-        assert.are.same('~~不要~~ 修改 ~~这里~~', copywriting.format('~~不要~~修改~~这里~~'))
+        eq('~~不要~~ 修改', format('~~不要~~修改'))
+        eq('注意 ~~不要~~ 修改', format('注意~~不要~~修改'))
+        eq('注意 ~~不要~~', format('注意~~不要~~'))
+        eq('~~不要~~ 修改', format('~~不要~~ 修改'))
+        eq('~~不要~~ 修改 ~~这里~~', format('~~不要~~修改~~这里~~'))
     end)
 
     it('remove extra space before Chinese punctuation', function()
-        assert.are.same(
+        eq(
             '加了一些空格，你可以很快学会。: )',
-            copywriting.format('加了一些空格 ，你可以很快学会。: )'))
+            format('加了一些空格 ，你可以很快学会。: )'))
     end)
 
     it('remove extra space after Chinese punctuation', function()
-        assert.are.same(
+        eq(
             '使用 *第三方库函数* 或 *自定义的函数* 呢，你可以很快学会。: )',
-            copywriting.format('使用 *第三方库函数* 或 *自定义的函数* 呢，你可以很快学会。 : )'))
+            format('使用 *第三方库函数* 或 *自定义的函数* 呢，你可以很快学会。 : )'))
     end)
 
     it('do not add space if there is one', function()
-        assert.are.same('特定 body 的准入控制', copywriting.format('特定 body 的准入控制'))
+        eq('特定 body 的准入控制', format('特定 body 的准入控制'))
     end)
 
     it('do not add space before Chinese punctuation', function()
-        assert.are.same('OpenResty，是一个 Web 平台', copywriting.format('OpenResty，是一个Web平台'))
-        assert.are.same('提供的 GET、POST、PUT 和 DELETE 方法',
-            copywriting.format('提供的GET、POST、PUT和DELETE方法'))
+        eq('OpenResty，是一个 Web 平台', format('OpenResty，是一个Web平台'))
+        eq('提供的 GET、POST、PUT 和 DELETE 方法',
+            format('提供的GET、POST、PUT和DELETE方法'))
     end)
 
     it('ignore special line-start mark', function()
-        assert.are.same('*无序列表', copywriting.format("*无序列表"))
-        assert.are.same('+无序列表', copywriting.format("+无序列表"))
-        assert.are.same('-无序列表', copywriting.format("-无序列表"))
-        assert.are.same('9.有序列表', copywriting.format("9.有序列表"))
-        assert.are.same('#标题', copywriting.format("#标题"))
-        assert.are.same('>引用', copywriting.format(">引用"))
+        eq('*无序列表', format("*无序列表"))
+        eq('+无序列表', format("+无序列表"))
+        eq('-无序列表', format("-无序列表"))
+        eq('9.有序列表', format("9.有序列表"))
+        eq('#标题', format("#标题"))
+        eq('>引用', format(">引用"))
     end)
 
     it('ignore inline code', function()
-        assert.are.same('支持内联代码片段 `^_^颜文字233`',
-            copywriting.format('支持内联代码片段`^_^颜文字233`'))
+        eq('支持内联代码片段 `^_^颜文字233`',
+            format('支持内联代码片段`^_^颜文字233`'))
     end)
 
     it('trim trailing whitespace', function()
-        assert.are.same('HTTP 方法包括以下几种：',
-            copywriting.format('HTTP方法包括以下几种：  '))
+        eq('HTTP 方法包括以下几种：',
+            format('HTTP方法包括以下几种：  '))
     end)
 
     it('keyword replacing', function()
-        assert.are.same('Nginx 是一个高性能 Web 服务器，而 OpenResty 不仅仅是 Nginx + Lua',
-            copywriting.format('nginx是一个高性能web服务器，而Openresty不仅仅是nginx+lua'))
+        eq('Nginx 是一个高性能 Web 服务器，而 OpenResty 不仅仅是 Nginx + Lua',
+            format('nginx是一个高性能web服务器，而Openresty不仅仅是nginx+lua'))
     end)
 
     it('ignore links', function()
-        assert.are.same('[openresty](指向openresty.org)',
-            copywriting.format('[openresty](指向openresty.org)'))
-        assert.are.same('![openresty](指向openresty.org)',
-            copywriting.format('![openresty](指向openresty.org)'))
+        eq('[openresty](指向openresty.org)',
+            format('[openresty](指向openresty.org)'))
+        eq('![openresty](指向openresty.org)',
+            format('![openresty](指向openresty.org)'))
     end)
 
     it('ignore inline code, but add space around them', function()
-        assert.are.same('名空间 `ffi.C` 通过', copywriting.format('名空间`ffi.C`通过'))
-        assert.are.same('名空间 `ffi.C` 通过', copywriting.format('名空间 `ffi.C`通过'))
-        assert.are.same('名空间 `ffi.C` 通过', copywriting.format('名空间`ffi.C` 通过'))
-        assert.are.same('名空间 `ffi.C` 通过', copywriting.format('名空间 `ffi.C` 通过'))
-        assert.are.same('尤其需要指出的是，`metatable` 与',
-            copywriting.format('尤其需要指出的是， `metatable`与'))
-        assert.are.same('`cdata` 类型用来将', copywriting.format('`cdata`类型用来将'))
-        assert.are.same('元方法 `__index`', copywriting.format('元方法`__index`'))
-        assert.are.same('`string` 函数……实际长度将会在 `buflen` 这个数组中返回。',
-            copywriting.format("`string`函数……实际长度将会在`buflen`这个数组中返回。"))
+        eq('名空间 `ffi.C` 通过', format('名空间`ffi.C`通过'))
+        eq('名空间 `ffi.C` 通过', format('名空间 `ffi.C`通过'))
+        eq('名空间 `ffi.C` 通过', format('名空间`ffi.C` 通过'))
+        eq('名空间 `ffi.C` 通过', format('名空间 `ffi.C` 通过'))
+        eq('尤其需要指出的是，`metatable` 与',
+            format('尤其需要指出的是， `metatable`与'))
+        eq('`cdata` 类型用来将', format('`cdata`类型用来将'))
+        eq('元方法 `__index`', format('元方法`__index`'))
+        eq('`string` 函数……实际长度将会在 `buflen` 这个数组中返回。',
+            format("`string`函数……实际长度将会在`buflen`这个数组中返回。"))
     end)
 
     it('handle partial markdown notation', function()
-        assert.are.same('这是*星号', copywriting.format('这是*星号'))
-        assert.are.same('哈哈~~哈哈', copywriting.format('哈哈~~哈哈'))
+        eq('这是*星号', format('这是*星号'))
+        eq('哈哈~~哈哈', format('哈哈~~哈哈'))
     end)
 end)
