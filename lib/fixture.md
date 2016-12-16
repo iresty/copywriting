@@ -10,6 +10,14 @@ code block不做处理
  ```c
  ```
 
+- [x] GitHub Flavored Markdown is supported.
+- [ ] Support Gitbook's ?
+
+如何处理table  |
+--  |
+忽略table中的内容 |
+| int p |
+
 语句块中的 `inline
  code也不做处理`
 > quote不做处理

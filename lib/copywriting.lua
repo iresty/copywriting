@@ -51,7 +51,7 @@ local function add_space(text)
 end
 
 local function replace_word(text)
-    return text:gsub('%w+', function(match)
+    return text:gsub('[%w_-]+', function(match)
         return dict[match:lower()] or match
     end)
 end
@@ -122,6 +122,8 @@ function _M.run(filename)
     local output = {}
 
     local in_code_block = false
+    local in_table_head = false
+    local in_table_body = false
     local sentences_block = {}
     local action
     for line in io.lines(filename) do
@@ -129,7 +131,25 @@ function _M.run(filename)
             in_code_block = not in_code_block
         end
 
-        if in_code_block or line == '' or line:sub(1, 4) == '    ' or
+        -- ignore table
+        --[[
+        First Header | Second Header <- in_table_head
+        ------------ | ------------- <- in_table_body
+        cell 1 | cell 2              <- in_table_body
+        first column | second column <- in_table_body
+        --]]
+        if not line:find('.+|') then
+            in_table_body = false
+        elseif not (in_table_body or next(sentences_block)) then
+            in_table_head = true
+        end
+        if in_table_head and line:find('--.*|') then
+            in_table_body = true
+            in_table_head = false
+        end
+
+        if in_code_block or in_table_head or in_table_body or
+                line == '' or line:sub(1, 4) == '    ' or
                 line:find('^[>\t]') or line:find('^```') then
             action = 'ignore'
         elseif line:find('^%s*[*+%d#=%-!\\[]') then
