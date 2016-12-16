@@ -147,10 +147,10 @@ function _M.run(filename)
             if action == 'format' then
                 output[#output + 1] = _M.format(line)
             else
-                output[#output + 1] = line
+                output[#output + 1] = trim_right(line)
             end
         else
-            sentences_block[#sentences_block + 1] = line
+            sentences_block[#sentences_block + 1] = trim_right(line)
         end
     end
     if next(sentences_block) then
