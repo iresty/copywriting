@@ -14,22 +14,29 @@ local function is_chinese_punctuation(word)
     return false
 end
 
+local function wrap_space(text)
+    return function(before, match, after)
+        before = text:sub(before-1, before-1)
+        if before:find('^[^%s%p]') then
+            match = ' '..match
+        end
+
+        after = text:sub(after, after)
+        if after:find('^[^%s%p]') then
+            match = match..' '
+        end
+        return match
+    end
+end
+
 local function add_space(text)
     -- 不支持用 _xx_ 表示斜体。容易跟代码混淆。
-    text = text:gsub('([^%p])(*+.+*+)(.?)', function(before, word, after)
-        before = before:find('^%s') and before or (before..' ')
-        after = after:find('^%s') and after or (' '..after)
-        return before .. word .. after
-    end)
-    text = text:gsub('([^%p])(~~.+~~)(.?)', function(before, word, after)
-        before = before:find('^%s') and before or (before..' ')
-        after = after:find('^%s') and after or (' '..after)
-        return before .. word .. after
-    end)
+    text = text:gsub('()(*+.-*+)()', wrap_space(text))
+    text = text:gsub('()(~~.-~~)()', wrap_space(text))
 
     -- 断句标点
     text = text:gsub('([^%p])([.,?!;%%]+)(%S)', function(before, punctuation, after)
-        if punctuation:sub(-1) == '.' and after:find('[%d%l]') then
+        if punctuation:sub(-1) == '.' and after:find('^[%d%l%p]') then
             return before .. punctuation .. after
         end
         return before .. punctuation .. ' ' .. after
@@ -37,23 +44,9 @@ local function add_space(text)
     -- 对称操作符
     text = text:gsub('([^%p])(%+)(%S)', '%1 %2 %3')
 
-    local word_pattern = '%w+[%s%p]?%w+'
-    text = text:gsub('^('..word_pattern..')([^%s%w%p])', '%1 %2')
-    text = text:gsub('([^%s%w%p])('..word_pattern..')$', '%1 %2')
-    text = text:gsub('([^%w%p])('..word_pattern..')([^%w%p])', function(before, match, after)
-        before = before:find('^%s') and before or (before..' ')
-        after = after:find('^%s') and after or (' '..after)
-        return before .. match .. after
-    end)
+    local word_pattern = '%w+'
+    text = text:gsub('()('..word_pattern..')()', wrap_space(text))
 
-    -- 移除中文标点前的空白
-    text = text:gsub(' (...)', function(match)
-        return is_chinese_punctuation(match) and match or (' '..match)
-    end)
-     -- 移除中文标点后的多个空白
-    text = text:gsub('(...)(%s+)', function(match, ws)
-        return is_chinese_punctuation(match) and match or (match..ws)
-    end)
     return text
 end
 
@@ -64,7 +57,8 @@ local function replace_word(text)
 end
 
 local function format(text)
-    return replace_word(add_space(text))
+    return replace_word(
+           add_space(text))
 end
 
 local function trim_right(line)
@@ -76,6 +70,12 @@ function _M.format(line)
     if line:find('^%d%.') then
         return line:sub(1, 2) .. _M.format(line:sub(3))
     end
+    local links = {}
+    line = line:gsub('%[(.+)%]%((.+)%)', function(title, link)
+        links[#links + 1] = title
+        links[#links + 1] = link
+        return  '[]()'
+    end)
 
     local t = {}
     local pattern = "(.-)`"
@@ -95,7 +95,27 @@ function _M.format(line)
     else
         t[#t + 1] = ''
     end
-    return trim_right(table.concat(t, '`'))
+
+    line = table.concat(t, '`')
+    line = line:gsub('()(`.-`)()', wrap_space(line))
+
+    -- 移除中文标点前的空格
+    line = line:gsub('( +)(...)', function(ws, match)
+        return is_chinese_punctuation(match) and match or (ws..match)
+    end)
+     -- 移除中文标点后的多个空格
+    line = line:gsub('(...)( +)', function(match, ws)
+        return is_chinese_punctuation(match) and match or (match..ws)
+    end)
+
+    local i = 1
+    line = line:gsub('(%[%]%()%)', function()
+        local title = links[i]
+        local link = links[i+1]
+        i = i + 2
+        return '[' .. title .. '](' ..link .. ')'
+    end)
+    return trim_right(line)
 end
 
 function _M.run(filename)
@@ -109,7 +129,8 @@ function _M.run(filename)
             in_code_block = not in_code_block
         end
 
-        if in_code_block or #line == 0 or line:find('^[%s>]') then
+        if in_code_block or line == '' or line:sub(1, 4) == '    ' or
+                line:find('^[>\t]') or line:find('^```') then
             action = 'ignore'
         elseif line:find('^%s*[*+%d#=%-!\\[]') then
             action = 'format'
@@ -136,7 +157,7 @@ function _M.run(filename)
         output[#output + 1] = _M.format(table.concat(sentences_block, '\n'))
     end
 
-    return table.concat(output, '\n')
+    return table.concat(output, '\n') .. '\n'
 end
 
 return _M
