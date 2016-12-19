@@ -8,5 +8,4 @@ return {
     openresty = 'OpenResty',
     ngx_openresty = 'OpenResty',
     python = 'Python',
-    web = 'Web',
 }
