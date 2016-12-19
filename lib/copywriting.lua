@@ -71,7 +71,7 @@ function _M.format(line)
         return line:sub(1, 2) .. _M.format(line:sub(3))
     end
     local links = {}
-    line = line:gsub('%[(.+)%]%((.+)%)', function(title, link)
+    line = line:gsub('%[(.*)%]%((.*)%)', function(title, link)
         links[#links + 1] = title
         links[#links + 1] = link
         return  '[]()'

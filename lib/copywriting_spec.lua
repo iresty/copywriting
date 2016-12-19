@@ -139,7 +139,7 @@ describe('format line', function()
     end)
 
     it('keyword replacing', function()
-        eq('Nginx 是一个高性能 Web 服务器，而 OpenResty 不仅仅是 Nginx + Lua',
+        eq('Nginx 是一个高性能 web 服务器，而 OpenResty 不仅仅是 Nginx + Lua',
             format('nginx是一个高性能web服务器，而Openresty不仅仅是nginx+lua'))
     end)
 
@@ -148,6 +148,7 @@ describe('format line', function()
             format('[openresty](指向openresty.org)'))
         eq('![openresty](指向openresty.org)',
             format('![openresty](指向openresty.org)'))
+        eq('![](../images/nginx.png)', format('![](../images/nginx.png)'))
     end)
 
     it('ignore inline code, but add space around them', function()
