@@ -47,6 +47,11 @@ code block不做处理
 语句块中的 `inline
  code也不做处理`
 > quote不做处理
+
+“PHP 是最好的语言”
+
+pull request : [点击查看](https://gitHub.com/openresty/lua-nginx-module/pull/531)
+commit detail: [点击查看](https://github.com/membphis/lua-nginx-module/commit/9d991677c090e1f86fa5840b19e02e56a4a17f86)
 ]], '\n')
         local actual = split(run('fixture.md'), '\n')
         for i, line in ipairs(actual) do
@@ -70,15 +75,43 @@ describe('format line', function()
         eq('2014 年 9 月 12 日', format('2014年9月12日'))
     end)
 
+    it('but do not add space between Chinese punctuations and number/English', function()
+        eq('“1”', format('“1”'))
+        eq('“consume”', format('“consume”'))
+        eq('（1）', format('（1）'))
+        eq('apple、', format('apple、'))
+    end)
+
     it('add space after some punctuations if there is no space', function()
         eq('Moreover, OpenResty support', format('Moreover,OpenResty support'))
         eq('Moreover, OpenResty support', format('Moreover, OpenResty support'))
         eq('50% 的酒精', format('50%的酒精'))
         eq('从 40-60 中', format('从 40-60 中'))
+        eq('互联网+ 的新闻', format('互联网+ 的新闻'))
         -- 点号后面如果是标点符号、小写字母、数字，不加空格
         eq([[ffi.\*API]], format([[ffi.\*API]]))
         eq('1.2', format('1.2'))
         eq('fixture.md', format('fixture.md'))
+    end)
+
+    it('add space before some punctuations if there is no space', function()
+        eq('我们不再尝试使用 if 来判断 $uri 是否存在', format('我们不再尝试使用 if 来判断$uri 是否存在'))
+        eq('我们不再尝试使用 if 来判断 $uri 是否存在', format('我们不再尝试使用 if 来判断 $uri 是否存在'))
+    end)
+
+    it('do not add space between punctuations', function()
+        eq('pos,,', format('pos,,'))
+        eq('86.36%(19.0 / (19 + 3))', format('86.36%(19.0 / (19 + 3))'))
+    end)
+
+    it('add space around some punctuations pair', function()
+        eq('"q" 参数用在 Drupal, Joomla, WordPress', format('"q"参数用在 Drupal, Joomla, WordPress'))
+        eq('两个 "light threads" 必须', format('两个"light threads"必须'))
+        eq("两个 'light threads' 必须", format("两个'light threads'必须"))
+    end)
+
+    it('do not add space around multiple plus punctuations', function()
+        eq([[静态语言 C\C++ 和]], format([[静态语言C\C++和]]))
     end)
 
     it('add space around asterisks if there is no space', function()
@@ -101,6 +134,13 @@ describe('format line', function()
         eq(
             '加了一些空格，你可以很快学会。: )',
             format('加了一些空格 ，你可以很快学会。: )'))
+        eq('“wb”', format('  “wb”'))
+    end)
+
+    it('but keep space after special line-start mark', function()
+        eq('- “wb”', format('- “wb”'))
+        eq('+ “wb”', format('+ “wb”'))
+        eq('* “wb”', format('* “wb”'))
     end)
 
     it('remove extra space after Chinese punctuation', function()
@@ -139,16 +179,24 @@ describe('format line', function()
     end)
 
     it('keyword replacing', function()
+        eq('自己的 loader 里可能并不能调用 ngx_lua 那些涉及',
+            format('自己的loader里可能并不能调用ngx_lua那些涉及'))
+        -- 像这种类型的，手工替换 ngx-lua 成 ngx_lua 吧
+        eq('尽量使用 ngx-lua 提供的官方库', format('尽量使用 ngx-lua 提供的官方库'))
         eq('Nginx 是一个高性能 web 服务器，而 OpenResty 不仅仅是 Nginx + Lua',
             format('nginx是一个高性能web服务器，而Openresty不仅仅是nginx+lua'))
+        eq('让我们打开 nginx.conf', format('让我们打开 nginx.conf'))
     end)
 
-    it('ignore links', function()
-        eq('[openresty](指向openresty.org)',
+    it('ignore links but parse link title', function()
+        eq('[OpenResty](指向openresty.org)',
             format('[openresty](指向openresty.org)'))
-        eq('![openresty](指向openresty.org)',
+        eq('![OpenResty](指向openresty.org)',
             format('![openresty](指向openresty.org)'))
         eq('![](../images/nginx.png)', format('![](../images/nginx.png)'))
+        eq('请看下面的状态转换图（图片来自[「The TCP/IP Guide」](http://www.tcpipguide.com/)）',
+            format('请看下面的状态转换图（图片来自[「The TCP/IP Guide」](http://www.tcpipguide.com/)）'))
+        eq('[引自 OpenResty 讨论组](https://groups.google.com/forum/#!searchin/openresty/package.loaded/openresty/-MZ9AzXaaG8/TeXTyLCuoYUJ)', format('[引自OpenResty讨论组](https://groups.google.com/forum/#!searchin/openresty/package.loaded/openresty/-MZ9AzXaaG8/TeXTyLCuoYUJ)'))
     end)
 
     it('ignore inline code, but add space around them', function()

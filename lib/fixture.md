@@ -21,3 +21,8 @@ code block不做处理
 语句块中的 `inline
  code也不做处理`
 > quote不做处理
+
+“PHP是最好的语言”
+
+pull request : [点击查看](https://gitHub.com/openresty/lua-nginx-module/pull/531)
+commit detail: [点击查看](https://github.com/membphis/lua-nginx-module/commit/9d991677c090e1f86fa5840b19e02e56a4a17f86)
