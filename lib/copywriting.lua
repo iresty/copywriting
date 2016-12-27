@@ -79,8 +79,30 @@ local function replace_word(text)
 end
 
 local function format(text)
-    return replace_word(
-           add_space(text))
+    -- 格式化时，跳过文本中的超链接
+    -- 只支持 http 链接。链接中不支持中文，以免跟链接后面的中文混淆
+    local placeholder = {}
+    for i = 1, 32 do
+        placeholder[i] = string.char(math.random(97, 122))
+    end
+    placeholder = table.concat(placeholder)
+
+    local links = {}
+    local i = 1
+    text = text:gsub("https?://[%w%-%%&?$_,.+!*'()/#]+", function(match)
+        links[i] = match
+        i = i + 1
+        return placeholder
+    end)
+
+    text = replace_word(add_space(text))
+
+    i = 0
+    text = text:gsub(placeholder, function()
+        i = i + 1
+        return links[i]
+    end)
+    return text
 end
 
 local function trim_right(line)

@@ -216,4 +216,19 @@ describe('format line', function()
         eq('这是*星号', format('这是*星号'))
         eq('哈哈~~哈哈', format('哈哈~~哈哈'))
     end)
+
+    it('ignore text in a link', function()
+        local sample = {
+            '[https://github.com/openresty/lua-nginx-module](https://github.com/openresty/lua-nginx-module)',
+            'https://github.com/openresty/lua-nginx-module/commit/f0b45946d',
+            'https://github.com/openresty/lua-nginx-module/issues/872#issuecomment-250988928',
+            'https://github.com/openresty/lua-nginx-module#lua-variable-scope 文档链接',
+            '[http://github.com/openresty/lua-nginx-module](https://github.com/openresty/lua-nginx-module)',
+            'http://github.com/openresty/lua-nginx-module/commit/f0b45946d',
+            '文档链接: http://github.com/openresty/lua-nginx-module#lua-variable-scope',
+        }
+        for i = 1, #sample do
+            eq(sample[i], format(sample[i]))
+        end
+    end)
 end)
