@@ -1,0 +1,25 @@
+#!/usr/bin/env lua
+local copywriting = require 'copywriting'
+
+if #arg == 0 then
+    print('Please input filename[s]')
+    os.exit(1)
+end
+
+local opt = arg[1]
+if opt == '-w' then
+    for i = 2, #arg do
+        local output = copywriting.run(arg[i])
+        local f = io.open(arg[i], 'w')
+        f:write(output)
+    end
+elseif opt == '-h' then
+    print([[Usage:
+    filename                   : print formated result to stdout
+    -h                         : print this help message
+    -w filename1 filename2 ... : overwrite input filenames with formated result (support multiple files)
+    ]])
+else
+    local output = copywriting.run(opt)
+    print(output)
+end
