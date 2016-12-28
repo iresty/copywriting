@@ -69,6 +69,10 @@ describe('format line', function()
         eq('在 C 语言中', format('在C语言中'))
     end)
 
+    it('but do not add space if there is one', function()
+        eq('特定 body 的准入控制', format('特定 body 的准入控制'))
+    end)
+
     it('add space between Chinese and number', function()
         eq('2014 年，', format('2014年，'))
         eq('奇虎 360 公司的第 1024', format('奇虎360公司的第1024'))
@@ -147,10 +151,6 @@ describe('format line', function()
         eq(
             '使用 *第三方库函数* 或 *自定义的函数* 呢，你可以很快学会。: )',
             format('使用 *第三方库函数* 或 *自定义的函数* 呢，你可以很快学会。 : )'))
-    end)
-
-    it('do not add space if there is one', function()
-        eq('特定 body 的准入控制', format('特定 body 的准入控制'))
     end)
 
     it('do not add space before Chinese punctuation', function()
